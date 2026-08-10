@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Database Connection Notice - HairSync{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="p-5 bg-white rounded-4 shadow-sm border">
+                <div class="text-center mb-4">
+                    <div class="stat-icon bg-warning-subtle text-warning mx-auto mb-3" style="width: 64px; height: 64px; font-size: 2rem;">
+                        <i class="bi bi-database-exclamation"></i>
+                    </div>
+                    <h3 class="fw-bold">MySQL Connection Notice</h3>
+                    <p class="text-muted small">The application was unable to establish a connection with the MySQL database server.</p>
+                </div>
+
+                {% if error %}
+                    <div class="p-3 bg-light rounded-3 text-start small font-monospace text-danger mb-4 border">
+                        <strong>Error details:</strong> {{ error }}
+                    </div>
+                {% endif %}
+
+                <h6 class="fw-bold mb-3"><i class="bi bi-tools text-primary me-2"></i> How to resolve this (MCA Project Setup Guide):</h6>
+                <ol class="small text-muted mb-4 d-flex flex-column gap-2 ps-3">
+                    <li>
+                        <strong>Start MySQL Server:</strong> If you are using XAMPP or WAMP, open the XAMPP Control Panel and click <strong>Start</strong> next to MySQL.
+                    </li>
+                    <li>
+                        <strong>Check Credentials in <code>.env</code>:</strong> Verify <code>DB_HOST=localhost</code>, <code>DB_USER=root</code>, <code>DB_PASSWORD=</code>, and <code>DB_PORT=3306</code> match your local environment.
+                    </li>
+                    <li>
+                        <strong>Initialize Database:</strong> Open terminal in the <code>HairSync</code> project directory and run:
+                        <div class="bg-dark text-light p-2 rounded mt-1 font-monospace">python database/init_db.py</div>
+                        <em>or import <code>database/hairsync.sql</code> directly via phpMyAdmin.</em>
+                    </li>
+                </ol>
+
+                <div class="text-center">
+                    <a href="{{ url_for('index') }}" class="btn btn-hs-primary rounded-pill px-4">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Try Connecting Again
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

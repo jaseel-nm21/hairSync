@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}NGO Dashboard - HairSync{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge badge-role-ngo px-2 py-1 text-uppercase">NGO &amp; Donation Center Portal</span>
+                {% if profile %}
+                    <span class="badge badge-status-{{ profile.approval_status }} text-capitalize">
+                        {{ profile.approval_status }}
+                    </span>
+                {% endif %}
+            </div>
+            <h2 class="fw-bold mb-0">{{ profile.organization_name if profile else user.name }}</h2>
+            <p class="text-muted small mb-0">Government Reg: <code>{{ profile.registration_number if profile else 'N/A' }}</code></p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('ngo.profile') }}" class="btn btn-hs-primary btn-sm">
+                <i class="bi bi-building-gear me-1"></i> Edit Organization Profile
+            </a>
+        </div>
+    </div>
+
+    <!-- PENDING APPROVAL WARNING BANNER -->
+    {% if not is_approved %}
+        <div class="alert alert-warning border-warning shadow-sm rounded-4 p-4 mb-4" role="alert">
+            <div class="d-flex gap-3 align-items-start">
+                <div class="fs-1 text-warning lh-1">
+                    <i class="bi bi-shield-exclamation"></i>
+                </div>
+                <div>
+                    <h5 class="alert-heading fw-bold mb-1">Account Under Administrative Verification</h5>
+                    <p class="mb-2">
+                        Your organization account was registered and assigned <strong>Approval Status: Pending</strong>. 
+                        Our platform administrators are currently auditing your official registration document (<code>{{ profile.registration_number if profile else '' }}</code>).
+                    </p>
+                    <div class="p-3 bg-white bg-opacity-75 rounded-3 border border-warning border-opacity-50 small mb-2">
+                        <i class="bi bi-lock-fill text-muted me-1"></i>
+                        <strong>Restricted Access Mode:</strong> While pending approval, creating donation centers, hosting collection appointments, and fulfilling wig requests are locked. You may freely review or update your organization profile details below.
+                    </div>
+                    <small class="text-muted">
+                        Need expedite review? Please contact administrator at <a href="mailto:admin@hairsync.com" class="fw-semibold">admin@hairsync.com</a>.
+                    </small>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- APPROVED STATUS BANNER -->
+        <div class="alert alert-success border-success shadow-sm rounded-4 p-4 mb-4" role="alert">
+            <div class="d-flex gap-3 align-items-center">
+                <div class="fs-1 text-success lh-1">
+                    <i class="bi bi-patch-check-fill"></i>
+                </div>
+                <div>
+                    <h5 class="alert-heading fw-bold mb-1">Verified Partner NGO</h5>
+                    <p class="mb-0 small">
+                        Your organization has been officially vetted and approved by HairSync Administration. You possess authorized rights to host hair collection drives, manufacture human-hair wigs, and serve registered medical patients.
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="row g-4 mb-4">
+        <!-- Left Column: Organization Summary -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-building text-primary me-2"></i> Organization Profile</h5>
+                    <a href="{{ url_for('ngo.profile') }}" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2 small">Edit</a>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="stat-icon icon-ngo mx-auto mb-2" style="width: 72px; height: 72px; font-size: 2.2rem;">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1">{{ profile.organization_name if profile else user.name }}</h4>
+                        <span class="badge bg-light text-dark border font-monospace px-3 py-1">
+                            {{ profile.registration_number if profile else 'Not Provided' }}
+                        </span>
+                    </div>
+
+                    <ul class="list-group list-group-flush border-top border-bottom mb-3 small">
+                        <li class="list-group-item px-0 py-2 d-flex justify-content-between">
+                            <span class="text-muted">Contact Person:</span>
+                            <span class="fw-semibold">{{ profile.account_holder if profile else user.name }}</span>
+                        </li>
+                        <li class="list-group-item px-0 py-2 d-flex justify-content-between">
+                            <span class="text-muted">Official Email:</span>
+                            <span class="fw-semibold">{{ profile.email if profile else user.email }}</span>
+                        </li>
+                        <li class="list-group-item px-0 py-2 d-flex justify-content-between">
+                            <span class="text-muted">Phone Hotline:</span>
+                            <span class="fw-semibold">{{ profile.phone if profile else 'Not provided' }}</span>
+                        </li>
+                        <li class="list-group-item px-0 py-2 d-flex justify-content-between">
+                            <span class="text-muted">District / Jurisdiction:</span>
+                            <span class="fw-semibold">{{ profile.district if profile else 'Not provided' }}</span>
+                        </li>
+                    </ul>
+
+                    <div>
+                        <span class="text-muted small fw-bold text-uppercase">Mission Statement:</span>
+                        <p class="small text-muted mt-1 mb-0 bg-light p-3 rounded-3 border">
+                            {{ profile.description if profile and profile.description else 'No organizational description provided yet. Click edit profile to add your mission statement.' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Operational Modules & Future Hooks -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-grid-fill text-primary me-2"></i> Operational Management Suite</h5>
+                    <span class="badge bg-secondary-subtle text-secondary small">Module 2 &amp; 3 Integration</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <!-- Module 2: Donation Centers -->
+                        <div class="col-sm-6">
+                            <div class="module-teaser position-relative {{ 'opacity-50' if not is_approved else '' }}">
+                                <i class="bi bi-shop fs-2 text-primary mb-2 d-block"></i>
+                                <h6 class="fw-bold mb-1">Donation Centers</h6>
+                                <p class="text-muted small mb-2">Create &amp; manage physical salon drop-off hubs, opening hours &amp; coordinates.</p>
+                                <span class="badge {{ 'bg-primary' if is_approved else 'bg-secondary' }}">
+                                    {{ 'Coming in Module 2' if is_approved else 'Locked (Pending)' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Module 3: Appointments -->
+                        <div class="col-sm-6">
+                            <div class="module-teaser position-relative {{ 'opacity-50' if not is_approved else '' }}">
+                                <i class="bi bi-calendar-event fs-2 text-success mb-2 d-block"></i>
+                                <h6 class="fw-bold mb-1">Appointment Management</h6>
+                                <p class="text-muted small mb-2">Confirm donor haircut slots, cancel or reschedule appointments.</p>
+                                <span class="badge {{ 'bg-success' if is_approved else 'bg-secondary' }}">
+                                    {{ 'Coming in Module 3' if is_approved else 'Locked (Pending)' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Module 3: Hair Inventory -->
+                        <div class="col-sm-6">
+                            <div class="module-teaser position-relative {{ 'opacity-50' if not is_approved else '' }}">
+                                <i class="bi bi-box-seam fs-2 text-teal mb-2 d-block" style="color: #0f766e;"></i>
+                                <h6 class="fw-bold mb-1">Donation Inventory</h6>
+                                <p class="text-muted small mb-2">Log received hair weight, length, condition, and catalog for wig craftsmanship.</p>
+                                <span class="badge {{ 'bg-teal text-white' if is_approved else 'bg-secondary' }}" style="{% if is_approved %}background-color: #0d9488;{% endif %}">
+                                    {{ 'Coming in Module 3' if is_approved else 'Locked (Pending)' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Module 4: Wig Allocation & Tracking -->
+                        <div class="col-sm-6">
+                            <div class="module-teaser position-relative {{ 'opacity-50' if not is_approved else '' }}">
+                                <i class="bi bi-truck fs-2 text-danger mb-2 d-block"></i>
+                                <h6 class="fw-bold mb-1">Wig Allocation &amp; Tracking</h6>
+                                <p class="text-muted small mb-2">Review patient requests, assign tracking IDs, and manage dispatched crowns.</p>
+                                <span class="badge {{ 'bg-danger' if is_approved else 'bg-secondary' }}">
+                                    {{ 'Post-Module 3 Tracking' if is_approved else 'Locked (Pending)' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
