@@ -99,10 +99,9 @@ class NGO:
         # Synchronize user status: 'active' if approved, 'inactive' or 'pending' otherwise
         user_status = 'active' if status == 'approved' else ('pending' if status == 'pending' else 'inactive')
         sync_sql = """
-            UPDATE users u
-            JOIN ngo_profiles n ON u.id = n.user_id
-            SET u.status = %s
-            WHERE n.id = %s
+            UPDATE users
+            SET status = %s
+            WHERE id = (SELECT user_id FROM ngo_profiles WHERE id = %s)
         """
         return execute_db(sync_sql, (user_status, ngo_id))
 

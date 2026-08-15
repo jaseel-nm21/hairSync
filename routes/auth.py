@@ -205,6 +205,15 @@ def register():
             status=user_status
         )
 
+        # Automatically establish authenticated session
+        session.clear()
+        session['user_id'] = user_id
+        session['user_name'] = org_name if role == 'ngo' else name
+        session['user_email'] = email
+        session['role'] = role
+        if role == 'ngo':
+            session['approval_status'] = 'pending'
+
         # Create corresponding profile
         if role == 'donor':
             Donor.create(
@@ -242,15 +251,6 @@ def register():
                 reason_for_wig=reason
             )
             flash('Registration successful! Your recipient profile has been created.', 'success')
-
-        # Automatically log the newly registered user in
-        session.clear()
-        session['user_id'] = user_id
-        session['user_name'] = org_name if role == 'ngo' else name
-        session['user_email'] = email
-        session['role'] = role
-        if role == 'ngo':
-            session['approval_status'] = 'pending'
 
         return redirect(url_for(get_role_dashboard(role)))
 

@@ -4,8 +4,8 @@ Main Application Entry Point
 """
 
 import os
+import sqlite3
 from flask import Flask, render_template, session, redirect, url_for
-import pymysql
 
 from config import Config
 from database import db
@@ -24,7 +24,9 @@ def create_app(config_class=Config):
     # Ensure upload directory exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-    # Initialize Database teardown hooks
+    # Initialize Database and teardown hooks
+    from database.init_db import init_db_if_needed
+    init_db_if_needed(app.config.get('DATABASE'))
     db.init_app(app)
 
     # Register Blueprints
@@ -62,9 +64,9 @@ def create_app(config_class=Config):
     def internal_server_error(e):
         return render_template('errors/500.html', error=str(e)), 500
 
-    @app.errorhandler(pymysql.MySQLError)
+    @app.errorhandler(sqlite3.Error)
     def handle_database_error(e):
-        app.logger.error(f"MySQL Error: {e}")
+        app.logger.error(f"Database Error: {e}")
         return render_template('errors/db_error.html', error=str(e)), 500
 
     # Custom CLI Command: flask init-db

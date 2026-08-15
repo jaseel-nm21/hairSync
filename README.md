@@ -2,7 +2,7 @@
 
 [![Python Version](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
 [![Framework](https://img.shields.io/badge/Framework-Flask%203.x-green.svg)](https://flask.palletsprojects.com/)
-[![Database](https://img.shields.io/badge/Database-MySQL-orange.svg)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-SQLite-blue.svg)](https://www.sqlite.org/)
 [![Frontend](https://img.shields.io/badge/Frontend-Bootstrap%205.3-purple.svg)](https://getbootstrap.com/)
 [![Project Phase](https://img.shields.io/badge/Module-1%20Completed-teal.svg)](#)
 
@@ -55,7 +55,7 @@ In accordance with the modular development roadmap, **Module 1** has been implem
 | Layer | Technology | Description |
 | :--- | :--- | :--- |
 | **Backend** | Python 3.9+ / Flask 3.x | Lightweight, modular Python web framework |
-| **Database** | MySQL (PyMySQL) | Relational database with parameterized queries and DictCursor |
+| **Database** | SQLite (built-in `sqlite3`) | Local relational database with parameterized queries and dictionary rows |
 | **Frontend** | HTML5, CSS3, JavaScript | Modern, clean healthcare design with zero Tailwind dependency |
 | **UI Framework**| Bootstrap 5.3 + Icons | Responsive grid, accessible modals, cards, and tables |
 | **Security** | Werkzeug Security | Secure password hashing (`generate_password_hash`, `check_password_hash`) |
@@ -69,15 +69,15 @@ In accordance with the modular development roadmap, **Module 1** has been implem
 HairSync/
 ├── app.py                      # Application factory, error handlers & blueprint registration
 ├── config.py                   # Environment configuration loader
-├── requirements.txt            # Python dependencies (Flask, PyMySQL, python-dotenv, etc.)
+├── requirements.txt            # Python dependencies (Flask, Werkzeug, python-dotenv, etc.)
 ├── README.md                   # Project documentation & execution guide
 ├── .gitignore                  # Git tracking exclusion rules
 ├── .env.example                # Sample environment configuration
 ├── .env                        # Local database & secret credentials
 │
 ├── database/
-│   ├── hairsync.sql            # Complete MySQL DDL schema and initial seeds
-│   ├── db.py                   # Database connection pool and parameterized execution helpers
+│   ├── hairsync.sql            # Complete SQLite DDL schema and initial seeds
+│   ├── db.py                   # SQLite connection and parameterized execution helpers
 │   └── init_db.py              # CLI automated database setup script
 │
 ├── models/
@@ -137,45 +137,45 @@ HairSync/
 
 ---
 
-## 🗄️ Database Design (MySQL)
+## 🗄️ Database Design (SQLite)
 
 ### Tables & Relationships
 1. **`users`**:
-   - `id` (INT PK AI)
-   - `name` (VARCHAR 100)
-   - `email` (VARCHAR 120 UNIQUE)
-   - `password_hash` (VARCHAR 255)
-   - `role` (ENUM: `'admin'`, `'ngo'`, `'donor'`, `'recipient'`)
-   - `status` (ENUM: `'active'`, `'inactive'`, `'pending'`, `'suspended'`)
+   - `id` (INTEGER PRIMARY KEY AUTOINCREMENT)
+   - `name` (TEXT)
+   - `email` (TEXT UNIQUE)
+   - `password_hash` (TEXT)
+   - `role` (TEXT CHECK: `'admin'`, `'ngo'`, `'donor'`, `'recipient'`)
+   - `status` (TEXT CHECK: `'active'`, `'inactive'`, `'pending'`, `'suspended'`)
    - `created_at`, `updated_at` (TIMESTAMP)
 
 2. **`donor_profiles`**:
-   - `id` (INT PK AI)
-   - `user_id` (INT UNIQUE FK &rarr; `users.id` ON DELETE CASCADE)
-   - `phone` (VARCHAR 20)
-   - `address` (TEXT), `district` (VARCHAR 80)
-   - `hair_length` (DECIMAL 5,2 in inches)
-   - `hair_type` (VARCHAR 50: Straight, Wavy, Curly, Coily)
-   - `hair_condition` (VARCHAR 100: Virgin/Untreated, Colored, Gray, Chemically Treated)
-   - `photo` (VARCHAR 255 - filename in `static/uploads/donors/`)
+   - `id` (INTEGER PRIMARY KEY AUTOINCREMENT)
+   - `user_id` (INTEGER UNIQUE FK &rarr; `users.id` ON DELETE CASCADE)
+   - `phone` (TEXT)
+   - `address` (TEXT), `district` (TEXT)
+   - `hair_length` (REAL in inches)
+   - `hair_type` (TEXT: Straight, Wavy, Curly, Coily)
+   - `hair_condition` (TEXT: Virgin/Untreated, Colored, Gray, Chemically Treated)
+   - `photo` (TEXT - filename in `static/uploads/donors/`)
    - `created_at`, `updated_at`
 
 3. **`ngo_profiles`**:
-   - `id` (INT PK AI)
-   - `user_id` (INT UNIQUE FK &rarr; `users.id` ON DELETE CASCADE)
-   - `organization_name` (VARCHAR 150)
-   - `registration_number` (VARCHAR 100 UNIQUE)
-   - `phone` (VARCHAR 20), `email` (VARCHAR 120)
-   - `address` (TEXT), `district` (VARCHAR 80)
+   - `id` (INTEGER PRIMARY KEY AUTOINCREMENT)
+   - `user_id` (INTEGER UNIQUE FK &rarr; `users.id` ON DELETE CASCADE)
+   - `organization_name` (TEXT)
+   - `registration_number` (TEXT UNIQUE)
+   - `phone` (TEXT), `email` (TEXT)
+   - `address` (TEXT), `district` (TEXT)
    - `description` (TEXT)
-   - `approval_status` (ENUM: `'pending'`, `'approved'`, `'rejected'`)
+   - `approval_status` (TEXT CHECK: `'pending'`, `'approved'`, `'rejected'`)
    - `created_at`, `updated_at`
 
 4. **`recipient_profiles`**:
-   - `id` (INT PK AI)
-   - `user_id` (INT UNIQUE FK &rarr; `users.id` ON DELETE CASCADE)
-   - `phone` (VARCHAR 20)
-   - `address` (TEXT), `district` (VARCHAR 80)
+   - `id` (INTEGER PRIMARY KEY AUTOINCREMENT)
+   - `user_id` (INTEGER UNIQUE FK &rarr; `users.id` ON DELETE CASCADE)
+   - `phone` (TEXT)
+   - `address` (TEXT), `district` (TEXT)
    - `date_of_birth` (DATE)
    - `reason_for_wig` (TEXT)
    - `created_at`, `updated_at`
@@ -186,9 +186,9 @@ HairSync/
 
 ### 1. Prerequisites
 Ensure you have:
-- **Python 3.9 or newer**
-- **MySQL Server** (via **XAMPP**, **WAMP**, or standalone **MySQL Community Server**)
+- **Python 3.9 or newer** (with built-in `sqlite3`)
 - **Git**
+*(No XAMPP, MySQL Server, or phpMyAdmin required!)*
 
 ### 2. Clone / Open Project
 ```bash
@@ -215,30 +215,16 @@ FLASK_APP=app.py
 FLASK_ENV=development
 FLASK_DEBUG=1
 SECRET_KEY=hairsync_super_secret_key_mca_project_2024
-
-# MySQL Configuration (Default for XAMPP is root with empty password)
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=hairsync_db
 ```
 
-### 5. Initialize the MySQL Database
-You can initialize the database using either of two methods:
+### 5. Initialize the SQLite Database
+The database is located at `instance/hairsync.db`. You can initialize it using:
 
-#### Option A: Automated CLI Script (Recommended)
-Make sure your MySQL service is started (e.g. in XAMPP Control Panel), then run:
 ```bash
 python database/init_db.py
+# or: flask init-db
 ```
-*This creates `hairsync_db`, sets up all tables, and creates the pre-seeded demo accounts with fresh password hashes.*
-
-#### Option B: phpMyAdmin Import
-1. Open `http://localhost/phpmyadmin` in your browser.
-2. Click **Import** tab.
-3. Choose the file `database/hairsync.sql` from the project directory.
-4. Click **Go**.
+*Note: The application also automatically creates and initializes `instance/hairsync.db` on first run if it does not already exist!*
 
 ---
 
