@@ -14,8 +14,11 @@
             <h2 class="fw-bold mb-0">Welcome, {{ user.name }}!</h2>
             <p class="text-muted small mb-0">Thank you for pledging your hair to help cancer patients smile again.</p>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{{ url_for('donor.profile') }}" class="btn btn-hs-primary btn-sm">
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('donor.donation_centers') }}" class="btn btn-hs-primary btn-sm">
+                <i class="bi bi-geo-alt me-1"></i> Find Donation Centers
+            </a>
+            <a href="{{ url_for('donor.profile') }}" class="btn btn-hs-outline btn-sm">
                 <i class="bi bi-person-gear me-1"></i> Update Hair Profile
             </a>
         </div>

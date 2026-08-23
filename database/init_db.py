@@ -74,12 +74,61 @@ def run_init(db_path=None):
 
 
 def init_db_if_needed(db_path=None):
-    """Automatically initialize the database if the file does not exist or is empty."""
+    """Automatically initialize the database or apply missing schema updates."""
     if db_path is None:
         db_path = Config.DATABASE
     if not os.path.exists(db_path) or os.path.getsize(db_path) == 0:
         run_init(db_path)
+    else:
+        # Check and apply non-destructive table migrations (Module 2 donation_centers)
+        try:
+            conn = sqlite3.connect(db_path)
+            conn.execute("PRAGMA foreign_keys = ON;")
+            cur = conn.cursor()
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='donation_centers'")
+            if not cur.fetchone():
+                print("[*] Applying non-destructive migration: creating donation_centers table...")
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS donation_centers (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ngo_id INTEGER NOT NULL,
+                        center_name TEXT NOT NULL,
+                        address TEXT NOT NULL,
+                        district TEXT NOT NULL,
+                        city TEXT NOT NULL,
+                        state TEXT NOT NULL DEFAULT 'Kerala',
+                        pincode TEXT NOT NULL,
+                        phone TEXT NOT NULL,
+                        email TEXT DEFAULT NULL,
+                        opening_time TEXT NOT NULL,
+                        closing_time TEXT NOT NULL,
+                        working_days TEXT NOT NULL,
+                        description TEXT DEFAULT NULL,
+                        latitude REAL DEFAULT NULL,
+                        longitude REAL DEFAULT NULL,
+                        status TEXT DEFAULT 'Active' CHECK(status IN ('Active', 'Inactive', 'Pending', 'Rejected', 'Approved')),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (ngo_id) REFERENCES ngo_profiles (id) ON DELETE CASCADE
+                    );
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_dc_ngo ON donation_centers(ngo_id);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_dc_district ON donation_centers(district);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_dc_status ON donation_centers(status);")
+                # Insert default seed center if ngo_profiles has id 1
+                cur.execute("SELECT id FROM ngo_profiles WHERE id = 1")
+                if cur.fetchone():
+                    cur.execute("""
+                        INSERT OR IGNORE INTO donation_centers 
+                        (id, ngo_id, center_name, address, district, city, state, pincode, phone, email, opening_time, closing_time, working_days, description, latitude, longitude, status)
+                        VALUES (1, 1, 'Kochi Central Hair Drop Center', '45 Healthcare Boulevard, Near City Hospital, Marine Drive', 'Ernakulam', 'Kochi', 'Kerala', '682031', '+91 9876543210', 'kochi.center@hopehair.org', '09:00', '17:00', 'Monday - Saturday', 'Primary collection hub accepting sanitized hair donations, measurements, and donor consultations.', 9.9816, 76.2799, 'Active');
+                    """)
+                conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[-] Migration check warning: {e}")
 
 
 if __name__ == '__main__':
     run_init()
+

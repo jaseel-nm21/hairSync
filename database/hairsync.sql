@@ -79,6 +79,35 @@ CREATE TABLE recipient_profiles (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
+-- 5. DONATION CENTERS TABLE (Module 2)
+-- Stores physical donation collection hubs managed by verified NGOs
+CREATE TABLE IF NOT EXISTS donation_centers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ngo_id INTEGER NOT NULL,
+    center_name TEXT NOT NULL,
+    address TEXT NOT NULL,
+    district TEXT NOT NULL,
+    city TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'Kerala',
+    pincode TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    email TEXT DEFAULT NULL,
+    opening_time TEXT NOT NULL,
+    closing_time TEXT NOT NULL,
+    working_days TEXT NOT NULL,
+    description TEXT DEFAULT NULL,
+    latitude REAL DEFAULT NULL,
+    longitude REAL DEFAULT NULL,
+    status TEXT DEFAULT 'Active' CHECK(status IN ('Active', 'Inactive', 'Pending', 'Rejected', 'Approved')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ngo_id) REFERENCES ngo_profiles (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_dc_ngo ON donation_centers(ngo_id);
+CREATE INDEX IF NOT EXISTS idx_dc_district ON donation_centers(district);
+CREATE INDEX IF NOT EXISTS idx_dc_status ON donation_centers(status);
+
 -- ==========================================================
 -- INITIAL SAMPLE DATA & DEFAULT SEEDS
 -- Default accounts:
@@ -121,3 +150,7 @@ INSERT INTO users (id, name, email, password_hash, role, status) VALUES
 
 INSERT INTO recipient_profiles (user_id, phone, address, district, date_of_birth, reason_for_wig) VALUES
 (5, '+91 9988776655', 'House No 23, Rose Gardens, Kowdiar', 'Thiruvananthapuram', '1998-05-14', 'Undergoing chemotherapy treatment for breast cancer. Requesting natural wig for emotional confidence.');
+
+-- 6. Sample Donation Center for Hope Hair Foundation (ngo_id = 1)
+INSERT INTO donation_centers (id, ngo_id, center_name, address, district, city, state, pincode, phone, email, opening_time, closing_time, working_days, description, latitude, longitude, status) VALUES
+(1, 1, 'Kochi Central Hair Drop Center', '45 Healthcare Boulevard, Near City Hospital, Marine Drive', 'Ernakulam', 'Kochi', 'Kerala', '682031', '+91 9876543210', 'kochi.center@hopehair.org', '09:00', '17:00', 'Monday - Saturday', 'Primary collection hub accepting sanitized hair donations, measurements, and donor consultations.', 9.9816, 76.2799, 'Active');

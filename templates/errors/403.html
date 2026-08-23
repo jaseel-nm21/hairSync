@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied (403) - HairSync{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="p-5 bg-white rounded-4 shadow-sm border">
+                <div class="display-1 fw-bold text-danger mb-2"><i class="bi bi-shield-x"></i> 403</div>
+                <h3 class="fw-bold mb-3">ACCESS DENIED</h3>
+                <p class="text-muted mb-4">
+                    {{ message or "You do not have authorization to access or modify this resource. If you represent an organization, you may only manage your own donation centers." }}
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="{{ url_for(role_dashboard_url) }}" class="btn btn-hs-primary rounded-pill px-4">
+                        <i class="bi bi-speedometer2 me-1"></i> My Dashboard
+                    </a>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="bi bi-house me-1"></i> Homepage
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

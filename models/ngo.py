@@ -139,3 +139,37 @@ class NGO:
         sql = "SELECT COUNT(*) as count FROM ngo_profiles"
         res = query_db(sql, one=True)
         return res['count'] if res else 0
+
+    @staticmethod
+    def get_with_center_counts(approval_status=None):
+        """Get all NGOs with their count of donation centers."""
+        if approval_status:
+            sql = """
+                SELECT n.*, u.name as account_holder, u.email as user_email,
+                       COUNT(dc.id) as center_count
+                FROM ngo_profiles n
+                JOIN users u ON n.user_id = u.id
+                LEFT JOIN donation_centers dc ON dc.ngo_id = n.id
+                WHERE n.approval_status = %s
+                GROUP BY n.id
+                ORDER BY n.created_at DESC
+            """
+            return query_db(sql, (approval_status,))
+        else:
+            sql = """
+                SELECT n.*, u.name as account_holder, u.email as user_email,
+                       COUNT(dc.id) as center_count
+                FROM ngo_profiles n
+                JOIN users u ON n.user_id = u.id
+                LEFT JOIN donation_centers dc ON dc.ngo_id = n.id
+                GROUP BY n.id
+                ORDER BY n.created_at DESC
+            """
+            return query_db(sql)
+
+    @staticmethod
+    def get_centers(ngo_id):
+        """Retrieve all donation centers owned by a given NGO profile ID."""
+        sql = "SELECT * FROM donation_centers WHERE ngo_id = %s ORDER BY created_at DESC"
+        return query_db(sql, (ngo_id,))
+

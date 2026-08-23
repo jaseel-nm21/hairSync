@@ -68,8 +68,25 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin.donation_centers') }}" id="navAdminCenters">
+                                    <i class="bi bi-geo-alt me-1"></i> Centers
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" href="{{ url_for('admin.users') }}" id="navAdminUsers">
                                     <i class="bi bi-people me-1"></i> Users
+                                </a>
+                            </li>
+                        {% elif current_user.role == 'ngo' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('ngo.donation_centers') }}" id="navNgoCenters">
+                                    <i class="bi bi-geo-alt me-1"></i> Donation Centers
+                                </a>
+                            </li>
+                        {% elif current_user.role == 'donor' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('donor.donation_centers') }}" id="navDonorCenters">
+                                    <i class="bi bi-geo-alt me-1"></i> Donation Centers
                                 </a>
                             </li>
                         {% endif %}
@@ -101,10 +118,20 @@
                                             <i class="bi bi-person-gear me-2 text-success"></i> My Hair Profile
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item py-2" href="{{ url_for('donor.donation_centers') }}">
+                                            <i class="bi bi-geo-alt me-2 text-primary"></i> Find Donation Centers
+                                        </a>
+                                    </li>
                                 {% elif current_user.role == 'ngo' %}
                                     <li>
                                         <a class="dropdown-item py-2" href="{{ url_for('ngo.profile') }}">
                                             <i class="bi bi-building-gear me-2 text-info"></i> Organization Profile
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item py-2" href="{{ url_for('ngo.donation_centers') }}">
+                                            <i class="bi bi-geo-alt me-2 text-primary"></i> Manage Donation Centers
                                         </a>
                                     </li>
                                 {% elif current_user.role == 'recipient' %}
@@ -114,6 +141,7 @@
                                         </a>
                                     </li>
                                 {% endif %}
+
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item py-2 text-danger" href="{{ url_for('auth.logout') }}" id="navLogout">

@@ -108,3 +108,40 @@ def profile():
         return redirect(url_for('donor.dashboard'))
 
     return render_template('donor/profile.html', user=user, profile=profile_data)
+
+
+@donor_bp.route('/donation-centers')
+@role_required('donor')
+def donation_centers():
+    """Browse verified active donation collection centers."""
+    from models.donation_center import DonationCenter
+    district_filter = request.args.get('district', 'all').strip()
+    search_query = request.args.get('q', '').strip()
+
+    centers = DonationCenter.get_active_or_approved(
+        district=district_filter if district_filter.lower() != 'all' else None,
+        search=search_query if search_query else None
+    )
+    districts = DonationCenter.get_distinct_districts()
+
+    return render_template(
+        'donor/donation_centers.html',
+        centers=centers,
+        districts=districts,
+        district_filter=district_filter,
+        search_query=search_query
+    )
+
+
+@donor_bp.route('/donation-centers/<int:center_id>')
+@role_required('donor')
+def view_center(center_id):
+    """View full details of an approved donation center."""
+    from models.donation_center import DonationCenter
+    center = DonationCenter.get_by_id(center_id)
+    if not center or center['status'] not in ['Active', 'Approved']:
+        flash('Donation center not found or currently inactive.', 'warning')
+        return redirect(url_for('donor.donation_centers'))
+
+    return render_template('ngo/donation_centers/view.html', center=center, is_donor=True)
+

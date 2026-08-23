@@ -1,7 +1,7 @@
 """
-Admin Routes
+Admin Routes (Module 1 & Module 2)
 Handles administrative dashboard, NGO approval/rejection workflows,
-and system user management.
+system user management, and platform-wide donation center oversight.
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
@@ -10,6 +10,7 @@ from models.user import User
 from models.ngo import NGO
 from models.donor import Donor
 from models.recipient import Recipient
+from models.donation_center import DonationCenter
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -17,31 +18,40 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 @admin_bp.route('/dashboard')
 @role_required('admin')
 def dashboard():
-    """Admin centralized metrics, pending NGO review queue, and recent users."""
+    """Admin centralized metrics, pending NGO review queue, donation center stats, and recent users."""
     role_counts = User.get_role_counts()
     pending_ngo_count = NGO.get_pending_count()
     pending_ngos = NGO.get_all(approval_status='pending')
+    approved_ngos = NGO.get_all(approval_status='approved')
     recent_users = User.get_all()[:8]
+
+    # Module 2 Metrics
+    center_counts = DonationCenter.get_counts()
+    recent_centers = DonationCenter.get_all()[:5]
 
     return render_template(
         'admin/dashboard.html',
         counts=role_counts,
         pending_ngo_count=pending_ngo_count,
+        approved_ngo_count=len(approved_ngos),
+        total_ngo_count=NGO.count(),
         pending_ngos=pending_ngos,
-        recent_users=recent_users
+        recent_users=recent_users,
+        center_counts=center_counts,
+        recent_centers=recent_centers
     )
 
 
 @admin_bp.route('/ngos')
 @role_required('admin')
 def ngos():
-    """Manage NGOs and filter by approval status."""
+    """Manage NGOs, view attached donation center tallies, and filter by approval status."""
     status_filter = request.args.get('status', 'all').lower()
     if status_filter in ['pending', 'approved', 'rejected']:
-        ngo_list = NGO.get_all(approval_status=status_filter)
+        ngo_list = NGO.get_with_center_counts(approval_status=status_filter)
     else:
         status_filter = 'all'
-        ngo_list = NGO.get_all()
+        ngo_list = NGO.get_with_center_counts()
 
     return render_template(
         'admin/ngos.html',
@@ -49,6 +59,7 @@ def ngos():
         status_filter=status_filter,
         pending_count=NGO.get_pending_count()
     )
+
 
 
 @admin_bp.route('/ngos/<int:ngo_id>/approve', methods=['POST'])
@@ -131,3 +142,81 @@ def recipients():
     """View all registered wig recipients."""
     all_recipients = Recipient.get_all()
     return render_template('admin/recipients.html', recipients=all_recipients)
+
+
+# ==========================================================
+# MODULE 2: DONATION CENTER ADMINISTRATIVE MANAGEMENT
+# ==========================================================
+
+@admin_bp.route('/donation-centers')
+@role_required('admin')
+def donation_centers():
+    """Admin overview of all donation centers across all NGOs with filtering and search."""
+    status_filter = request.args.get('status', 'all').strip()
+    district_filter = request.args.get('district', 'all').strip()
+    search_query = request.args.get('q', '').strip()
+
+    centers = DonationCenter.get_all(
+        status=status_filter if status_filter.lower() != 'all' else None,
+        district=district_filter if district_filter.lower() != 'all' else None,
+        search=search_query if search_query else None
+    )
+    counts = DonationCenter.get_counts()
+    districts = DonationCenter.get_distinct_districts()
+
+    return render_template(
+        'admin/donation_centers.html',
+        centers=centers,
+        counts=counts,
+        districts=districts,
+        status_filter=status_filter,
+        district_filter=district_filter,
+        search_query=search_query
+    )
+
+
+@admin_bp.route('/donation-centers/<int:center_id>/toggle-status', methods=['POST'])
+@role_required('admin')
+def toggle_center_status(center_id):
+    """Toggle center Active / Inactive status."""
+    center = DonationCenter.get_by_id(center_id)
+    if not center:
+        flash('Donation center not found.', 'danger')
+        return redirect(url_for('admin.donation_centers'))
+
+    new_status = 'Inactive' if center['status'] == 'Active' else 'Active'
+    DonationCenter.update_status(center_id, new_status)
+    flash(f"Center '{center['center_name']}' status has been set to {new_status}.", 'info')
+    return redirect(request.referrer or url_for('admin.donation_centers'))
+
+
+@admin_bp.route('/donation-centers/<int:center_id>/status', methods=['POST'])
+@role_required('admin')
+def set_center_status(center_id):
+    """Set specific center approval or operational status (Active, Inactive, Approved, Rejected, Pending)."""
+    center = DonationCenter.get_by_id(center_id)
+    if not center:
+        flash('Donation center not found.', 'danger')
+        return redirect(url_for('admin.donation_centers'))
+
+    new_status = request.form.get('status', '').strip()
+    if new_status in ['Active', 'Inactive', 'Approved', 'Rejected', 'Pending']:
+        DonationCenter.update_status(center_id, new_status)
+        flash(f"Center '{center['center_name']}' status updated to {new_status}.", 'success')
+    else:
+        flash('Invalid status provided.', 'danger')
+
+    return redirect(request.referrer or url_for('admin.donation_centers'))
+
+
+@admin_bp.route('/donation-centers/<int:center_id>')
+@role_required('admin')
+def view_center(center_id):
+    """View full donation center details for administrative audit."""
+    center = DonationCenter.get_by_id(center_id)
+    if not center:
+        flash('Donation center not found.', 'danger')
+        return redirect(url_for('admin.donation_centers'))
+
+    return render_template('ngo/donation_centers/view.html', center=center, is_admin=True)
+

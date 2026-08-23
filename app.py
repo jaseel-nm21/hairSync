@@ -56,9 +56,14 @@ def create_app(config_class=Config):
         return render_template('index.html')
 
     # Error Handlers
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('errors/403.html', message=getattr(e, 'description', None)), 403
+
     @app.errorhandler(404)
     def page_not_found(e):
         return render_template('errors/404.html'), 404
+
 
     @app.errorhandler(500)
     def internal_server_error(e):

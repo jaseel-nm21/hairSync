@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container py-4">
-    <!-- Header -->
+    <!-- Header Actions -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
@@ -18,10 +18,18 @@
             <h2 class="fw-bold mb-0">{{ profile.organization_name if profile else user.name }}</h2>
             <p class="text-muted small mb-0">Government Reg: <code>{{ profile.registration_number if profile else 'N/A' }}</code></p>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{{ url_for('ngo.profile') }}" class="btn btn-hs-primary btn-sm">
-                <i class="bi bi-building-gear me-1"></i> Edit Organization Profile
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('ngo.profile') }}" class="btn btn-hs-outline btn-sm">
+                <i class="bi bi-building-gear me-1"></i> Edit Profile
             </a>
+            {% if is_approved %}
+                <a href="{{ url_for('ngo.add_center') }}" class="btn btn-hs-primary btn-sm" id="btnQuickAddCenter">
+                    <i class="bi bi-plus-circle me-1"></i> Add Donation Center
+                </a>
+                <a href="{{ url_for('ngo.donation_centers') }}" class="btn btn-hs-secondary btn-sm" id="btnQuickManageCenters">
+                    <i class="bi bi-shop me-1"></i> Manage Centers
+                </a>
+            {% endif %}
         </div>
     </div>
 
@@ -58,15 +66,72 @@
                 <div>
                     <h5 class="alert-heading fw-bold mb-1">Verified Partner NGO</h5>
                     <p class="mb-0 small">
-                        Your organization has been officially vetted and approved by HairSync Administration. You possess authorized rights to host hair collection drives, manufacture human-hair wigs, and serve registered medical patients.
+                        Your organization has been officially vetted and approved by HairSync Administration. You possess authorized rights to host hair collection drives, manage donation centers, and serve registered medical recipients.
                     </p>
                 </div>
             </div>
         </div>
     {% endif %}
 
+    <!-- Metric Summary Cards (Module 2) -->
+    <div class="row g-3 mb-4">
+        <!-- NGO Approval Status -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon {{ 'icon-donor' if is_approved else 'bg-warning-subtle text-warning' }}">
+                    <i class="bi {{ 'bi-patch-check' if is_approved else 'bi-hourglass-split' }}"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-capitalize fs-4 {{ 'text-success' if is_approved else 'text-warning' }}">
+                        {{ profile.approval_status if profile else 'Pending' }}
+                    </div>
+                    <div class="stat-label">Approval Status</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Donation Centers -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon icon-ngo">
+                    <i class="bi bi-shop"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-primary">{{ center_counts.total }}</div>
+                    <div class="stat-label">Total Donation Centers</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Centers -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon icon-donor">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-success">{{ center_counts.active }}</div>
+                    <div class="stat-label">Active &amp; Verified Centers</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inactive/Pending Centers -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-secondary-subtle text-secondary">
+                    <i class="bi bi-pause-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-secondary">{{ center_counts.inactive + center_counts.pending }}</div>
+                    <div class="stat-label">Pending / Inactive</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-4 mb-4">
-        <!-- Left Column: Organization Summary -->
+        <!-- Left Column: Organization Summary & Quick Actions -->
         <div class="col-lg-5">
             <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
                 <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
@@ -103,70 +168,126 @@
                         </li>
                     </ul>
 
-                    <div>
+                    <div class="mb-3">
                         <span class="text-muted small fw-bold text-uppercase">Mission Statement:</span>
                         <p class="small text-muted mt-1 mb-0 bg-light p-3 rounded-3 border">
                             {{ profile.description if profile and profile.description else 'No organizational description provided yet. Click edit profile to add your mission statement.' }}
                         </p>
                     </div>
+
+                    <!-- Quick Actions Buttons -->
+                    <div class="d-grid gap-2 pt-2 border-top">
+                        <a href="{{ url_for('ngo.profile') }}" class="btn btn-sm btn-outline-secondary rounded-pill">
+                            <i class="bi bi-building-gear me-1"></i> Edit NGO Profile
+                        </a>
+                        {% if is_approved %}
+                            <a href="{{ url_for('ngo.add_center') }}" class="btn btn-sm btn-hs-primary rounded-pill">
+                                <i class="bi bi-plus-circle me-1"></i> Add Donation Center
+                            </a>
+                            <a href="{{ url_for('ngo.donation_centers') }}" class="btn btn-sm btn-hs-outline rounded-pill">
+                                <i class="bi bi-shop me-1"></i> Manage Donation Centers
+                            </a>
+                        {% else %}
+                            <button class="btn btn-sm btn-secondary rounded-pill" disabled title="Pending Admin Approval">
+                                <i class="bi bi-lock me-1"></i> Donation Centers Locked (Pending Approval)
+                            </button>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Operational Modules & Future Hooks -->
+        <!-- Right Column: Donation Centers Preview & Operational Modules -->
         <div class="col-lg-7">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
+            <!-- Donation Centers Quick Table / Teaser -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-grid-fill text-primary me-2"></i> Operational Management Suite</h5>
-                    <span class="badge bg-secondary-subtle text-secondary small">Module 2 &amp; 3 Integration</span>
+                    <h5 class="fw-bold mb-0"><i class="bi bi-shop text-primary me-2"></i> My Donation Centers</h5>
+                    {% if is_approved %}
+                        <a href="{{ url_for('ngo.donation_centers') }}" class="small text-decoration-none fw-semibold">View All ({{ center_counts.total }})</a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    {% if not is_approved %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-lock-fill fs-2 text-warning mb-2 d-block"></i>
+                            <div class="fw-semibold">Donation Center Management Locked</div>
+                            <small>Center creation unlocks once administrators verify your official NGO credentials.</small>
+                        </div>
+                    {% elif recent_centers %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small">
+                                    <tr>
+                                        <th class="ps-4">Center Name</th>
+                                        <th>District</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th class="text-end pe-4">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for c in recent_centers %}
+                                        <tr>
+                                            <td class="ps-4">
+                                                <div class="fw-bold">{{ c.center_name }}</div>
+                                                <small class="text-muted">{{ c.city }}</small>
+                                            </td>
+                                            <td>{{ c.district }}</td>
+                                            <td><small>{{ c.phone }}</small></td>
+                                            <td>
+                                                <span class="badge badge-status-{{ c.status | lower }} text-capitalize">
+                                                    {{ c.status }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <a href="{{ url_for('ngo.edit_center', center_id=c.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2 small">
+                                                    Manage
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-shop fs-2 text-primary opacity-50 mb-2 d-block"></i>
+                            <div class="fw-semibold">No Donation Centers Added Yet</div>
+                            <small class="d-block mb-3">Add your first collection center so donors can drop off hair.</small>
+                            <a href="{{ url_for('ngo.add_center') }}" class="btn btn-sm btn-hs-primary rounded-pill px-3">
+                                <i class="bi bi-plus-circle me-1"></i> Add Donation Center
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Future Modules -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-layers-half text-primary me-2"></i> Future Platform Capabilities</h5>
+                    <span class="badge bg-secondary-subtle text-secondary small">Module 3+ Roadmap</span>
                 </div>
                 <div class="card-body p-4">
                     <div class="row g-3">
-                        <!-- Module 2: Donation Centers -->
-                        <div class="col-sm-6">
-                            <div class="module-teaser position-relative {{ 'opacity-50' if not is_approved else '' }}">
-                                <i class="bi bi-shop fs-2 text-primary mb-2 d-block"></i>
-                                <h6 class="fw-bold mb-1">Donation Centers</h6>
-                                <p class="text-muted small mb-2">Create &amp; manage physical salon drop-off hubs, opening hours &amp; coordinates.</p>
-                                <span class="badge {{ 'bg-primary' if is_approved else 'bg-secondary' }}">
-                                    {{ 'Coming in Module 2' if is_approved else 'Locked (Pending)' }}
-                                </span>
-                            </div>
-                        </div>
-
                         <!-- Module 3: Appointments -->
                         <div class="col-sm-6">
-                            <div class="module-teaser position-relative {{ 'opacity-50' if not is_approved else '' }}">
+                            <div class="module-teaser position-relative opacity-75">
                                 <i class="bi bi-calendar-event fs-2 text-success mb-2 d-block"></i>
                                 <h6 class="fw-bold mb-1">Appointment Management</h6>
                                 <p class="text-muted small mb-2">Confirm donor haircut slots, cancel or reschedule appointments.</p>
-                                <span class="badge {{ 'bg-success' if is_approved else 'bg-secondary' }}">
-                                    {{ 'Coming in Module 3' if is_approved else 'Locked (Pending)' }}
-                                </span>
+                                <span class="badge bg-success-subtle text-success">Coming in Module 3</span>
                             </div>
                         </div>
 
                         <!-- Module 3: Hair Inventory -->
                         <div class="col-sm-6">
-                            <div class="module-teaser position-relative {{ 'opacity-50' if not is_approved else '' }}">
+                            <div class="module-teaser position-relative opacity-75">
                                 <i class="bi bi-box-seam fs-2 text-teal mb-2 d-block" style="color: #0f766e;"></i>
                                 <h6 class="fw-bold mb-1">Donation Inventory</h6>
-                                <p class="text-muted small mb-2">Log received hair weight, length, condition, and catalog for wig craftsmanship.</p>
-                                <span class="badge {{ 'bg-teal text-white' if is_approved else 'bg-secondary' }}" style="{% if is_approved %}background-color: #0d9488;{% endif %}">
-                                    {{ 'Coming in Module 3' if is_approved else 'Locked (Pending)' }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Module 4: Wig Allocation & Tracking -->
-                        <div class="col-sm-6">
-                            <div class="module-teaser position-relative {{ 'opacity-50' if not is_approved else '' }}">
-                                <i class="bi bi-truck fs-2 text-danger mb-2 d-block"></i>
-                                <h6 class="fw-bold mb-1">Wig Allocation &amp; Tracking</h6>
-                                <p class="text-muted small mb-2">Review patient requests, assign tracking IDs, and manage dispatched crowns.</p>
-                                <span class="badge {{ 'bg-danger' if is_approved else 'bg-secondary' }}">
-                                    {{ 'Post-Module 3 Tracking' if is_approved else 'Locked (Pending)' }}
-                                </span>
+                                <p class="text-muted small mb-2">Log received hair weight, length, condition, and catalog for wigs.</p>
+                                <span class="badge bg-teal text-white" style="background-color: #0d9488;">Coming in Module 3</span>
                             </div>
                         </div>
                     </div>

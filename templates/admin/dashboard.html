@@ -13,9 +13,12 @@
             </div>
             <h2 class="fw-bold mb-0">Platform Administration Dashboard</h2>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
             <a href="{{ url_for('admin.ngos') }}" class="btn btn-hs-outline btn-sm">
-                <i class="bi bi-building-check me-1"></i> Manage NGOs
+                <i class="bi bi-building-check me-1"></i> Partner NGOs
+            </a>
+            <a href="{{ url_for('admin.donation_centers') }}" class="btn btn-hs-secondary btn-sm">
+                <i class="bi bi-geo-alt me-1"></i> Donation Centers
             </a>
             <a href="{{ url_for('admin.users') }}" class="btn btn-hs-primary btn-sm">
                 <i class="bi bi-people me-1"></i> All Users
@@ -23,9 +26,48 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="row g-3 mb-4">
-        <!-- Donors -->
+    <!-- Row 1: Users & NGO Statistics Cards -->
+    <div class="row g-3 mb-3">
+        <!-- Total NGOs -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon icon-ngo">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-primary">{{ total_ngo_count }}</div>
+                    <div class="stat-label">Total NGOs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending NGOs -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card border-warning border-2">
+                <div class="stat-icon bg-warning-subtle text-warning">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-warning">{{ pending_ngo_count }}</div>
+                    <div class="stat-label">Pending NGOs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approved NGOs -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card border-success">
+                <div class="stat-icon icon-donor">
+                    <i class="bi bi-patch-check-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-success">{{ approved_ngo_count }}</div>
+                    <div class="stat-label">Approved NGOs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registered Donors -->
         <div class="col-xl-3 col-sm-6">
             <div class="stat-card">
                 <div class="stat-icon icon-donor">
@@ -37,42 +79,45 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- NGOs -->
-        <div class="col-xl-3 col-sm-6">
+    <!-- Row 2: Module 2 Donation Centers Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Total Donation Centers -->
+        <div class="col-xl-4 col-sm-6">
             <div class="stat-card">
-                <div class="stat-icon icon-ngo">
-                    <i class="bi bi-building"></i>
+                <div class="stat-icon bg-info-subtle text-info">
+                    <i class="bi bi-shop"></i>
                 </div>
                 <div>
-                    <div class="stat-number text-primary">{{ counts.ngo }}</div>
-                    <div class="stat-label">Partner NGOs</div>
+                    <div class="stat-number text-info">{{ center_counts.total }}</div>
+                    <div class="stat-label">Total Donation Centers</div>
                 </div>
             </div>
         </div>
 
-        <!-- Recipients -->
-        <div class="col-xl-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-icon icon-recipient">
-                    <i class="bi bi-gift-fill"></i>
+        <!-- Active Centers -->
+        <div class="col-xl-4 col-sm-6">
+            <div class="stat-card border-success">
+                <div class="stat-icon icon-donor">
+                    <i class="bi bi-check-circle-fill"></i>
                 </div>
                 <div>
-                    <div class="stat-number text-danger">{{ counts.recipient }}</div>
-                    <div class="stat-label">Wig Recipients</div>
+                    <div class="stat-number text-success">{{ center_counts.active }}</div>
+                    <div class="stat-label">Active Centers</div>
                 </div>
             </div>
         </div>
 
-        <!-- Pending Approvals -->
-        <div class="col-xl-3 col-sm-6">
-            <div class="stat-card border-warning border-2">
-                <div class="stat-icon bg-warning-subtle text-warning">
-                    <i class="bi bi-hourglass-split"></i>
+        <!-- Pending / Inactive Centers -->
+        <div class="col-xl-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-secondary-subtle text-secondary">
+                    <i class="bi bi-pause-circle"></i>
                 </div>
                 <div>
-                    <div class="stat-number text-warning">{{ pending_ngo_count }}</div>
-                    <div class="stat-label">Pending NGO Reviews</div>
+                    <div class="stat-number text-secondary">{{ center_counts.pending + center_counts.inactive }}</div>
+                    <div class="stat-label">Pending / Inactive Centers</div>
                 </div>
             </div>
         </div>
@@ -83,6 +128,7 @@
         <div class="col-12">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                 <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+
                     <div class="d-flex align-items-center gap-2">
                         <i class="bi bi-shield-exclamation text-warning fs-5"></i>
                         <h5 class="mb-0 fw-bold">NGO Verification Queue</h5>
