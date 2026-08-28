@@ -123,6 +123,61 @@
         </div>
     </div>
 
+    <!-- Row 3: Module 3 Appointments & Donations Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Total Appointments -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon icon-admin">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-danger">{{ appt_counts.total }}</div>
+                    <div class="stat-label">Total Appointments (<a href="{{ url_for('admin.appointments') }}" class="small text-decoration-none">View</a>)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Appointments -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning-subtle text-warning-emphasis">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-warning-emphasis">{{ appt_counts.pending }}</div>
+                    <div class="stat-label">Pending Appointments</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmed Appointments -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon icon-donor">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-success">{{ appt_counts.confirmed }}</div>
+                    <div class="stat-label">Confirmed Appointments</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Donations -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-teal-subtle" style="background-color: #ccfbf1;">
+                    <i class="bi bi-heart-pulse-fill" style="color: #0f766e;"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-teal" style="color: #0f766e;">{{ don_counts.count }} <span class="fs-6 text-muted">({{ don_counts.total_length }} cm)</span></div>
+                    <div class="stat-label">Hair Donations (<a href="{{ url_for('admin.donations') }}" class="small text-decoration-none">Ledger</a>)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Pending NGO Approvals Section -->
     <div class="row g-4 mb-4">
         <div class="col-12">

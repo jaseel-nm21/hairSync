@@ -124,6 +124,98 @@ def init_db_if_needed(db_path=None):
                         VALUES (1, 1, 'Kochi Central Hair Drop Center', '45 Healthcare Boulevard, Near City Hospital, Marine Drive', 'Ernakulam', 'Kochi', 'Kerala', '682031', '+91 9876543210', 'kochi.center@hopehair.org', '09:00', '17:00', 'Monday - Saturday', 'Primary collection hub accepting sanitized hair donations, measurements, and donor consultations.', 9.9816, 76.2799, 'Active');
                     """)
                 conn.commit()
+
+            # Module 3 migrations: donation_guidelines, appointments, donations
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='donation_guidelines'")
+            if not cur.fetchone():
+                print("[*] Applying non-destructive migration: creating donation_guidelines table...")
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS donation_guidelines (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ngo_id INTEGER NOT NULL UNIQUE,
+                        minimum_hair_length REAL NOT NULL DEFAULT 20.0,
+                        allowed_hair_types TEXT NOT NULL DEFAULT 'Straight,Wavy,Curly,Coily',
+                        allow_colored_hair TEXT NOT NULL DEFAULT 'Requires Review' CHECK(allow_colored_hair IN ('Allowed', 'Requires Review', 'Not Allowed')),
+                        allow_chemically_treated TEXT NOT NULL DEFAULT 'Not Allowed' CHECK(allow_chemically_treated IN ('Allowed', 'Requires Review', 'Not Allowed')),
+                        allow_bleached_hair TEXT NOT NULL DEFAULT 'Not Allowed' CHECK(allow_bleached_hair IN ('Allowed', 'Requires Review', 'Not Allowed')),
+                        minimum_condition TEXT DEFAULT 'Clean, dry, tied in ponytail or braid',
+                        additional_requirements TEXT DEFAULT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (ngo_id) REFERENCES ngo_profiles (id) ON DELETE CASCADE
+                    );
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_dg_ngo ON donation_guidelines(ngo_id);")
+                cur.execute("SELECT id FROM ngo_profiles WHERE id = 1")
+                if cur.fetchone():
+                    cur.execute("""
+                        INSERT OR IGNORE INTO donation_guidelines 
+                        (id, ngo_id, minimum_hair_length, allowed_hair_types, allow_colored_hair, allow_chemically_treated, allow_bleached_hair, minimum_condition, additional_requirements)
+                        VALUES (1, 1, 20.0, 'Straight,Wavy,Curly,Coily', 'Requires Review', 'Not Allowed', 'Not Allowed', 'Clean, dry, washed within 24 hours, tied in ponytail or braid at both ends', 'Layered hair is accepted if longest layer meets minimum length. Gray hair is welcome.');
+                    """)
+                conn.commit()
+
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='appointments'")
+            if not cur.fetchone():
+                print("[*] Applying non-destructive migration: creating appointments table...")
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS appointments (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        donor_id INTEGER NOT NULL,
+                        ngo_id INTEGER NOT NULL,
+                        donation_center_id INTEGER NOT NULL,
+                        appointment_date TEXT NOT NULL,
+                        appointment_time TEXT NOT NULL,
+                        purpose TEXT DEFAULT 'Hair Donation',
+                        donor_notes TEXT DEFAULT NULL,
+                        ngo_notes TEXT DEFAULT NULL,
+                        status TEXT NOT NULL DEFAULT 'Pending' CHECK(status IN ('Pending', 'Confirmed', 'Rejected', 'Cancelled', 'Completed', 'No Show')),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (donor_id) REFERENCES donor_profiles (id) ON DELETE CASCADE,
+                        FOREIGN KEY (ngo_id) REFERENCES ngo_profiles (id) ON DELETE CASCADE,
+                        FOREIGN KEY (donation_center_id) REFERENCES donation_centers (id) ON DELETE CASCADE
+                    );
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_appt_donor ON appointments(donor_id);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_appt_ngo ON appointments(ngo_id);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_appt_center ON appointments(donation_center_id);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_appt_date ON appointments(appointment_date);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_appt_status ON appointments(status);")
+                conn.commit()
+
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='donations'")
+            if not cur.fetchone():
+                print("[*] Applying non-destructive migration: creating donations table...")
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS donations (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        donor_id INTEGER NOT NULL,
+                        ngo_id INTEGER NOT NULL,
+                        donation_center_id INTEGER NOT NULL,
+                        appointment_id INTEGER UNIQUE DEFAULT NULL,
+                        hair_length REAL NOT NULL,
+                        hair_type TEXT NOT NULL,
+                        hair_condition TEXT NOT NULL,
+                        donation_date TEXT NOT NULL,
+                        quantity_or_estimated_weight TEXT DEFAULT NULL,
+                        notes TEXT DEFAULT NULL,
+                        status TEXT NOT NULL DEFAULT 'Completed' CHECK(status IN ('Completed', 'Recorded', 'Rejected')),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (donor_id) REFERENCES donor_profiles (id) ON DELETE CASCADE,
+                        FOREIGN KEY (ngo_id) REFERENCES ngo_profiles (id) ON DELETE CASCADE,
+                        FOREIGN KEY (donation_center_id) REFERENCES donation_centers (id) ON DELETE CASCADE,
+                        FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE SET NULL
+                    );
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_don_donor ON donations(donor_id);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_don_ngo ON donations(ngo_id);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_don_center ON donations(donation_center_id);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_don_appt ON donations(appointment_id);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_don_date ON donations(donation_date);")
+                conn.commit()
+
             conn.close()
         except Exception as e:
             print(f"[-] Migration check warning: {e}")

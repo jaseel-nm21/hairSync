@@ -28,6 +28,7 @@ wheels/
 
 # Flask instance folder
 instance/
+*.db
 .webassets-cache
 
 # Static user uploads (keep directory, ignore uploaded files)

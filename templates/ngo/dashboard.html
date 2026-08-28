@@ -124,7 +124,62 @@
                 </div>
                 <div>
                     <div class="stat-number text-secondary">{{ center_counts.inactive + center_counts.pending }}</div>
-                    <div class="stat-label">Pending / Inactive</div>
+                    <div class="stat-label">Pending / Inactive Centers</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module 3 Appointments & Donations Metrics -->
+    <div class="row g-3 mb-4">
+        <!-- Pending Appointments -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning-subtle text-warning-emphasis">
+                    <i class="bi bi-calendar2-event"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-warning-emphasis">{{ appointment_counts.pending }}</div>
+                    <div class="stat-label">Pending Appointments</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmed Appointments -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-success-subtle text-success">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-success">{{ appointment_counts.confirmed }}</div>
+                    <div class="stat-label">Confirmed Appointments</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Donations -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-teal-subtle" style="background-color: #ccfbf1;">
+                    <i class="bi bi-heart-pulse-fill" style="color: #0f766e;"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-teal" style="color: #0f766e;">{{ donation_counts.count }}</div>
+                    <div class="stat-label">Completed Donations</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Length Donated -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-info-subtle text-info">
+                    <i class="bi bi-scissors"></i>
+                </div>
+                <div>
+                    <div class="stat-number text-info">{{ donation_counts.total_length }} <span class="fs-6 text-muted">cm</span></div>
+                    <div class="stat-label">Hair Length Collected</div>
                 </div>
             </div>
         </div>
@@ -263,36 +318,107 @@
                 </div>
             </div>
 
-            <!-- Future Modules -->
-            <div class="card border-0 shadow-sm rounded-4">
+            <!-- Module 3 Appointments & Guidelines Quick Actions -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-layers-half text-primary me-2"></i> Future Platform Capabilities</h5>
-                    <span class="badge bg-secondary-subtle text-secondary small">Module 3+ Roadmap</span>
+                    <h5 class="fw-bold mb-0"><i class="bi bi-calendar-event text-teal me-2" style="color: #0f766e;"></i> Appointment &amp; Donation Management</h5>
+                    <span class="badge bg-teal-subtle text-teal small" style="background-color: #ccfbf1; color: #0f766e;">Module 3 Active</span>
                 </div>
                 <div class="card-body p-4">
                     <div class="row g-3">
-                        <!-- Module 3: Appointments -->
                         <div class="col-sm-6">
-                            <div class="module-teaser position-relative opacity-75">
-                                <i class="bi bi-calendar-event fs-2 text-success mb-2 d-block"></i>
-                                <h6 class="fw-bold mb-1">Appointment Management</h6>
-                                <p class="text-muted small mb-2">Confirm donor haircut slots, cancel or reschedule appointments.</p>
-                                <span class="badge bg-success-subtle text-success">Coming in Module 3</span>
+                            <div class="module-teaser p-3 rounded-3 border h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <i class="bi bi-calendar2-check fs-2 text-success mb-2 d-block"></i>
+                                    <h6 class="fw-bold mb-1">Donor Appointments</h6>
+                                    <p class="text-muted small mb-3">Review incoming requests, confirm slots, or mark donations completed.</p>
+                                </div>
+                                <a href="{{ url_for('ngo.appointments') }}" class="btn btn-hs-primary btn-sm w-100">
+                                    Manage Appointments ({{ appointment_counts.pending }} Pending)
+                                </a>
                             </div>
                         </div>
 
-                        <!-- Module 3: Hair Inventory -->
                         <div class="col-sm-6">
-                            <div class="module-teaser position-relative opacity-75">
-                                <i class="bi bi-box-seam fs-2 text-teal mb-2 d-block" style="color: #0f766e;"></i>
-                                <h6 class="fw-bold mb-1">Donation Inventory</h6>
-                                <p class="text-muted small mb-2">Log received hair weight, length, condition, and catalog for wigs.</p>
-                                <span class="badge bg-teal text-white" style="background-color: #0d9488;">Coming in Module 3</span>
+                            <div class="module-teaser p-3 rounded-3 border h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <i class="bi bi-card-checklist fs-2 text-warning mb-2 d-block"></i>
+                                    <h6 class="fw-bold mb-1">Donation Guidelines</h6>
+                                    <p class="text-muted small mb-3">Configure min length, colored hair, and chemical treatment criteria.</p>
+                                </div>
+                                <a href="{{ url_for('ngo.guidelines') }}" class="btn btn-hs-outline btn-sm w-100">
+                                    Configure Guidelines
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12">
+                            <div class="p-3 rounded-3 bg-light d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded-circle bg-white p-2 text-danger shadow-sm">
+                                        <i class="bi bi-heart-pulse-fill fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">Hair Donation Repository</div>
+                                        <small class="text-muted">{{ donation_counts.count }} fulfilled donations logged ({{ donation_counts.total_length }} cm total)</small>
+                                    </div>
+                                </div>
+                                <a href="{{ url_for('ngo.donations') }}" class="btn btn-outline-secondary btn-sm px-3">
+                                    View Donations Ledger
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Recent Appointments Table (if any) -->
+            {% if recent_appointments %}
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i> Recent Donor Appointments</h5>
+                    <a href="{{ url_for('ngo.appointments') }}" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2 small">View All</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Donor</th>
+                                <th>Center</th>
+                                <th>Date &amp; Time</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in recent_appointments %}
+                            <tr>
+                                <td class="ps-4 fw-semibold">{{ a.donor_name }}</td>
+                                <td>{{ a.center_name }}</td>
+                                <td>{{ a.appointment_date }} {{ a.appointment_time }}</td>
+                                <td>
+                                    {% if a.status == 'Confirmed' %}
+                                        <span class="badge bg-success-subtle text-success">Confirmed</span>
+                                    {% elif a.status == 'Pending' %}
+                                        <span class="badge bg-warning-subtle text-warning">Pending</span>
+                                    {% elif a.status == 'Completed' %}
+                                        <span class="badge bg-teal-subtle text-teal" style="background-color: #ccfbf1; color: #0f766e;">Completed</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-secondary border">{{ a.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{{ url_for('ngo.appointments') }}" class="btn btn-sm btn-outline-primary rounded-pill py-0 px-2 small">
+                                        Review
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

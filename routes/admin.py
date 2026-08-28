@@ -11,6 +11,8 @@ from models.ngo import NGO
 from models.donor import Donor
 from models.recipient import Recipient
 from models.donation_center import DonationCenter
+from models.appointment import Appointment
+from models.donation import Donation
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -29,6 +31,10 @@ def dashboard():
     center_counts = DonationCenter.get_counts()
     recent_centers = DonationCenter.get_all()[:5]
 
+    # Module 3 Metrics
+    appt_counts = Appointment.count_all()
+    don_counts = Donation.count_all()
+
     return render_template(
         'admin/dashboard.html',
         counts=role_counts,
@@ -38,7 +44,9 @@ def dashboard():
         pending_ngos=pending_ngos,
         recent_users=recent_users,
         center_counts=center_counts,
-        recent_centers=recent_centers
+        recent_centers=recent_centers,
+        appt_counts=appt_counts,
+        don_counts=don_counts
     )
 
 
@@ -219,4 +227,59 @@ def view_center(center_id):
         return redirect(url_for('admin.donation_centers'))
 
     return render_template('ngo/donation_centers/view.html', center=center, is_admin=True)
+
+
+# ==========================================================
+# MODULE 3: ADMIN APPOINTMENTS & DONATIONS MONITORING
+# ==========================================================
+
+@admin_bp.route('/appointments')
+@role_required('admin')
+def appointments():
+    """Platform-wide hair donation appointment monitoring and filtering."""
+    status_filter = request.args.get('status', 'all').strip()
+    district_filter = request.args.get('district', 'all').strip()
+
+    if status_filter not in ['Pending', 'Confirmed', 'Completed', 'Cancelled', 'Rejected', 'No Show']:
+        status_filter = 'all'
+    if district_filter.lower() == 'all':
+        district_filter = None
+
+    appts = Appointment.get_all(
+        status=status_filter if status_filter != 'all' else None,
+        district=district_filter
+    )
+    counts = Appointment.count_all()
+    districts = DonationCenter.get_distinct_districts()
+
+    return render_template(
+        'admin/appointments.html',
+        appointments=appts,
+        status_filter=status_filter,
+        district_filter=district_filter or 'all',
+        districts=districts,
+        counts=counts
+    )
+
+
+@admin_bp.route('/donations')
+@role_required('admin')
+def donations():
+    """Platform-wide completed hair donation ledger and impact audit."""
+    district_filter = request.args.get('district', 'all').strip()
+    if district_filter.lower() == 'all':
+        district_filter = None
+
+    donation_list = Donation.get_all(district=district_filter)
+    stats = Donation.count_all()
+    districts = DonationCenter.get_distinct_districts()
+
+    return render_template(
+        'admin/donations.html',
+        donations=donation_list,
+        stats=stats,
+        district_filter=district_filter or 'all',
+        districts=districts
+    )
+
 

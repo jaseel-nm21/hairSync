@@ -150,52 +150,101 @@
                 </div>
             </div>
 
-            <!-- Future Modules Teasers (Module 2 & 3 Extension Points) -->
-            <div class="card border-0 shadow-sm rounded-4">
+            <!-- Module 3 Live Services & Actions -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-stars text-warning me-2"></i> Next Phase Services</h5>
-                    <span class="badge bg-secondary-subtle text-secondary small">Modules 2 &amp; 3 Roadmap</span>
+                    <h5 class="fw-bold mb-0"><i class="bi bi-stars text-teal me-2" style="color: #0f766e;"></i> Donation Services</h5>
+                    <span class="badge bg-teal-subtle text-teal small" style="background-color: #ccfbf1; color: #0f766e;">Module 3 Active</span>
                 </div>
                 <div class="card-body p-4">
                     <div class="row g-3">
                         <div class="col-sm-6">
-                            <div class="module-teaser">
-                                <i class="bi bi-patch-check-fill text-teal fs-3 mb-2 d-block" style="color: #0f766e;"></i>
-                                <h6 class="fw-bold mb-1">Hair Eligibility Checker</h6>
-                                <p class="text-muted small mb-2">Automated interactive quiz to check if your hair is ready for wig crafting.</p>
-                                <span class="badge bg-light text-muted border">Module 3 Feature</span>
+                            <div class="module-teaser p-3 rounded-3 border h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <i class="bi bi-patch-check-fill text-teal fs-3 mb-2 d-block" style="color: #0f766e;"></i>
+                                    <h6 class="fw-bold mb-1">Eligibility Checker</h6>
+                                    <p class="text-muted small mb-3">Self-assessment questionnaire to evaluate hair specs against NGO criteria.</p>
+                                </div>
+                                <a href="{{ url_for('donor.eligibility') }}" class="btn btn-hs-outline btn-sm w-100">
+                                    Check Eligibility
+                                </a>
                             </div>
                         </div>
 
                         <div class="col-sm-6">
-                            <div class="module-teaser">
-                                <i class="bi bi-geo-alt-fill text-primary fs-3 mb-2 d-block"></i>
-                                <h6 class="fw-bold mb-1">Find Nearby Centers</h6>
-                                <p class="text-muted small mb-2">OpenStreetMap &amp; Leaflet map with verified salon partners and drop-off hubs.</p>
-                                <span class="badge bg-light text-muted border">Post-Module 3 Map</span>
+                            <div class="module-teaser p-3 rounded-3 border h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <i class="bi bi-calendar2-check-fill text-primary fs-3 mb-2 d-block"></i>
+                                    <h6 class="fw-bold mb-1">Book Appointment</h6>
+                                    <p class="text-muted small mb-3">Schedule a certified haircut appointment or hair drop-off with a center.</p>
+                                </div>
+                                <a href="{{ url_for('donor.book_appointment') }}" class="btn btn-hs-primary btn-sm w-100">
+                                    Book Appointment
+                                </a>
                             </div>
                         </div>
 
                         <div class="col-sm-6">
-                            <div class="module-teaser">
-                                <i class="bi bi-calendar2-check-fill text-success fs-3 mb-2 d-block"></i>
-                                <h6 class="fw-bold mb-1">Book Donation Appointment</h6>
-                                <p class="text-muted small mb-2">Schedule a certified free haircut appointment with participating NGO salons.</p>
-                                <span class="badge bg-light text-muted border">Module 3 Feature</span>
+                            <div class="module-teaser p-3 rounded-3 border h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <i class="bi bi-clock-history text-warning fs-3 mb-2 d-block"></i>
+                                    <h6 class="fw-bold mb-1">My Appointments</h6>
+                                    <p class="text-muted small mb-3">Track appointment confirmations, review dates, or manage bookings.</p>
+                                </div>
+                                <a href="{{ url_for('donor.appointments') }}" class="btn btn-outline-secondary btn-sm w-100">
+                                    View Appointments
+                                </a>
                             </div>
                         </div>
 
                         <div class="col-sm-6">
-                            <div class="module-teaser">
-                                <i class="bi bi-award-fill text-danger fs-3 mb-2 d-block"></i>
-                                <h6 class="fw-bold mb-1">Certificate &amp; History</h6>
-                                <p class="text-muted small mb-2">Download official donor appreciation certificate and track wig impact.</p>
-                                <span class="badge bg-light text-muted border">Module 3 Feature</span>
+                            <div class="module-teaser p-3 rounded-3 border h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <i class="bi bi-heart-pulse-fill text-danger fs-3 mb-2 d-block"></i>
+                                    <h6 class="fw-bold mb-1">Donation History</h6>
+                                    <p class="text-muted small mb-3">Track total centimeters donated and official records verified by NGOs.</p>
+                                </div>
+                                <a href="{{ url_for('donor.donations') }}" class="btn btn-outline-secondary btn-sm w-100">
+                                    View Donations ({{ donation_stats.count }})
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Recent Appointments Card -->
+            {% if recent_appointments %}
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-calendar-check text-primary me-2"></i> Recent Appointments</h5>
+                    <a href="{{ url_for('donor.appointments') }}" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2 small">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush rounded-bottom-4">
+                        {% for appt in recent_appointments %}
+                        <div class="list-group-item p-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">{{ appt.center_name }}</div>
+                                <small class="text-muted"><i class="bi bi-calendar3 me-1"></i> {{ appt.appointment_date }} at {{ appt.appointment_time }}</small>
+                            </div>
+                            <div>
+                                {% if appt.status == 'Confirmed' %}
+                                    <span class="badge bg-success-subtle text-success">Confirmed</span>
+                                {% elif appt.status == 'Pending' %}
+                                    <span class="badge bg-warning-subtle text-warning">Pending</span>
+                                {% elif appt.status == 'Completed' %}
+                                    <span class="badge bg-teal-subtle text-teal" style="background-color: #ccfbf1; color: #0f766e;">Completed</span>
+                                {% else %}
+                                    <span class="badge bg-light text-secondary border">{{ appt.status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

@@ -5,11 +5,15 @@ and physical hair donation center management (CRUD, ownership validation, status
 """
 
 from functools import wraps
+from datetime import date, datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from routes.auth import role_required
 from models.user import User
 from models.ngo import NGO
 from models.donation_center import DonationCenter
+from models.donation_guideline import DonationGuideline
+from models.appointment import Appointment
+from models.donation import Donation
 
 ngo_bp = Blueprint('ngo', __name__, url_prefix='/ngo')
 
@@ -137,13 +141,25 @@ def dashboard():
     }
     recent_centers = DonationCenter.get_by_ngo_id(profile['id'])[:4] if (profile and is_approved) else []
 
+    # Module 3 metrics: appointments & donations
+    appointment_counts = Appointment.count_by_ngo(profile['id']) if profile else {
+        'total': 0, 'pending': 0, 'confirmed': 0, 'completed': 0, 'cancelled': 0
+    }
+    donation_counts = Donation.count_by_ngo(profile['id']) if profile else {
+        'count': 0, 'total_length': 0.0
+    }
+    recent_appointments = Appointment.get_by_ngo(profile['id'])[:5] if (profile and is_approved) else []
+
     return render_template(
         'ngo/dashboard.html',
         user=user,
         profile=profile,
         is_approved=is_approved,
         center_counts=center_counts,
-        recent_centers=recent_centers
+        recent_centers=recent_centers,
+        appointment_counts=appointment_counts,
+        donation_counts=donation_counts,
+        recent_appointments=recent_appointments
     )
 
 
@@ -397,4 +413,278 @@ def delete_center(center_id):
 
     flash(f"Donation center '{center['center_name']}' has been deleted successfully.", 'info')
     return redirect(url_for('ngo.donation_centers'))
+
+
+# ==========================================================
+# MODULE 3: DONATION GUIDELINES
+# ==========================================================
+
+@ngo_bp.route('/guidelines', methods=['GET', 'POST'])
+@role_required('ngo')
+@ngo_approved_required
+def guidelines():
+    """Configure organization-specific hair donation acceptance criteria."""
+    user_id = session.get('user_id')
+    profile_data = NGO.get_by_user_id(user_id)
+    guide = DonationGuideline.get_or_default(profile_data['id'])
+
+    if request.method == 'POST':
+        min_length_str = request.form.get('minimum_hair_length', '').strip()
+        hair_types_list = request.form.getlist('allowed_hair_types')
+        hair_types_custom = request.form.get('allowed_hair_types_custom', '').strip()
+        allow_colored = request.form.get('allow_colored_hair', 'Requires Review').strip()
+        allow_chem = request.form.get('allow_chemically_treated', 'Not Allowed').strip()
+        allow_bleached = request.form.get('allow_bleached_hair', 'Not Allowed').strip()
+        min_condition = request.form.get('minimum_condition', '').strip()
+        additional_req = request.form.get('additional_requirements', '').strip()
+
+        errors = []
+        try:
+            min_length = float(min_length_str)
+            if min_length <= 0:
+                errors.append("Minimum hair length must be greater than 0 cm.")
+        except (ValueError, TypeError):
+            errors.append("Please enter a valid numeric minimum hair length.")
+
+        # Consolidate hair types
+        all_types = list(hair_types_list)
+        if hair_types_custom:
+            for t in hair_types_custom.split(','):
+                if t.strip() and t.strip() not in all_types:
+                    all_types.append(t.strip())
+
+        if not all_types:
+            all_types = ['Straight', 'Wavy', 'Curly', 'Coily']
+        allowed_types_str = ', '.join(all_types)
+
+        valid_choices = ('Allowed', 'Requires Review', 'Not Allowed')
+        if allow_colored not in valid_choices:
+            allow_colored = 'Requires Review'
+        if allow_chem not in valid_choices:
+            allow_chem = 'Not Allowed'
+        if allow_bleached not in valid_choices:
+            allow_bleached = 'Not Allowed'
+
+        if errors:
+            for err in errors:
+                flash(err, 'danger')
+            return render_template('ngo/guidelines.html', guide=guide, profile=profile_data)
+
+        DonationGuideline.upsert(
+            ngo_id=profile_data['id'],
+            minimum_hair_length=min_length,
+            allowed_hair_types=allowed_types_str,
+            allow_colored_hair=allow_colored,
+            allow_chemically_treated=allow_chem,
+            allow_bleached_hair=allow_bleached,
+            minimum_condition=min_condition if min_condition else None,
+            additional_requirements=additional_req if additional_req else None
+        )
+
+        flash('Hair donation criteria and guidelines saved successfully!', 'success')
+        return redirect(url_for('ngo.guidelines'))
+
+    return render_template('ngo/guidelines.html', guide=guide, profile=profile_data)
+
+
+# ==========================================================
+# MODULE 3: APPOINTMENTS MANAGEMENT
+# ==========================================================
+
+@ngo_bp.route('/appointments')
+@role_required('ngo')
+@ngo_approved_required
+def appointments():
+    """View and manage appointments booked for this NGO's collection centers."""
+    user_id = session.get('user_id')
+    profile_data = NGO.get_by_user_id(user_id)
+    status_filter = request.args.get('status', 'all').strip()
+
+    if status_filter not in ['Pending', 'Confirmed', 'Completed', 'Cancelled', 'Rejected']:
+        status_filter = 'all'
+
+    appts = Appointment.get_by_ngo(
+        profile_data['id'],
+        status=status_filter if status_filter != 'all' else None
+    )
+    counts = Appointment.count_by_ngo(profile_data['id'])
+
+    return render_template(
+        'ngo/appointments.html',
+        appointments=appts,
+        status_filter=status_filter,
+        counts=counts,
+        profile=profile_data
+    )
+
+
+@ngo_bp.route('/appointments/<int:appointment_id>/confirm', methods=['POST'])
+@role_required('ngo')
+@ngo_approved_required
+def confirm_appointment(appointment_id):
+    """Confirm a pending appointment."""
+    user_id = session.get('user_id')
+    profile_data = NGO.get_by_user_id(user_id)
+    appt = Appointment.get_by_id(appointment_id)
+
+    if not appt:
+        flash('Appointment record not found.', 'danger')
+        return redirect(url_for('ngo.appointments'))
+
+    if appt['ngo_id'] != profile_data['id']:
+        flash("ACCESS DENIED: You cannot manage appointments for another NGO.", 'danger')
+        return render_template('errors/403.html', message="ACCESS DENIED: Unauthorized appointment access."), 403
+
+    notes = request.form.get('ngo_notes', '').strip()
+    Appointment.update_status(appointment_id, 'Confirmed', ngo_notes=notes if notes else appt.get('ngo_notes'))
+    flash(f"Appointment #{appointment_id} for {appt['donor_name']} has been Confirmed.", 'success')
+    return redirect(url_for('ngo.appointments'))
+
+
+@ngo_bp.route('/appointments/<int:appointment_id>/reject', methods=['POST'])
+@role_required('ngo')
+@ngo_approved_required
+def reject_appointment(appointment_id):
+    """Reject a pending appointment with reason/notes."""
+    user_id = session.get('user_id')
+    profile_data = NGO.get_by_user_id(user_id)
+    appt = Appointment.get_by_id(appointment_id)
+
+    if not appt:
+        flash('Appointment record not found.', 'danger')
+        return redirect(url_for('ngo.appointments'))
+
+    if appt['ngo_id'] != profile_data['id']:
+        flash("ACCESS DENIED: You cannot manage appointments for another NGO.", 'danger')
+        return render_template('errors/403.html', message="ACCESS DENIED: Unauthorized appointment access."), 403
+
+    reason = request.form.get('ngo_notes', 'Rejected by NGO based on criteria or center capacity.').strip()
+    Appointment.update_status(appointment_id, 'Rejected', ngo_notes=reason)
+    flash(f"Appointment #{appointment_id} has been Rejected.", 'warning')
+    return redirect(url_for('ngo.appointments'))
+
+
+@ngo_bp.route('/appointments/<int:appointment_id>/cancel', methods=['POST'])
+@role_required('ngo')
+@ngo_approved_required
+def cancel_appointment(appointment_id):
+    """Cancel an appointment."""
+    user_id = session.get('user_id')
+    profile_data = NGO.get_by_user_id(user_id)
+    appt = Appointment.get_by_id(appointment_id)
+
+    if not appt:
+        flash('Appointment record not found.', 'danger')
+        return redirect(url_for('ngo.appointments'))
+
+    if appt['ngo_id'] != profile_data['id']:
+        flash("ACCESS DENIED: You cannot manage appointments for another NGO.", 'danger')
+        return render_template('errors/403.html', message="ACCESS DENIED: Unauthorized appointment access."), 403
+
+    reason = request.form.get('ngo_notes', 'Cancelled by center.').strip()
+    Appointment.update_status(appointment_id, 'Cancelled', ngo_notes=reason)
+    flash(f"Appointment #{appointment_id} has been marked as Cancelled.", 'info')
+    return redirect(url_for('ngo.appointments'))
+
+
+@ngo_bp.route('/appointments/<int:appointment_id>/complete', methods=['GET', 'POST'])
+@role_required('ngo')
+@ngo_approved_required
+def complete_appointment(appointment_id):
+    """Record fulfillment of hair donation and complete the appointment."""
+    user_id = session.get('user_id')
+    profile_data = NGO.get_by_user_id(user_id)
+    appt = Appointment.get_by_id(appointment_id)
+
+    if not appt:
+        flash('Appointment record not found.', 'danger')
+        return redirect(url_for('ngo.appointments'))
+
+    if appt['ngo_id'] != profile_data['id']:
+        flash("ACCESS DENIED: You cannot manage appointments for another NGO.", 'danger')
+        return render_template('errors/403.html', message="ACCESS DENIED: Unauthorized appointment access."), 403
+
+    if request.method == 'POST':
+        hair_length_str = request.form.get('hair_length', '').strip()
+        hair_type = request.form.get('hair_type', '').strip()
+        hair_condition = request.form.get('hair_condition', '').strip()
+        donation_date_str = request.form.get('donation_date', '').strip()
+        weight_or_qty = request.form.get('quantity_or_estimated_weight', '').strip()
+        notes = request.form.get('notes', '').strip()
+
+        errors = []
+        try:
+            length_val = float(hair_length_str)
+            if length_val <= 0:
+                errors.append("Actual measured hair length must be greater than 0 cm.")
+        except (ValueError, TypeError):
+            errors.append("Please provide a valid numeric hair length.")
+
+        if not hair_type:
+            errors.append("Hair type is required.")
+        if not hair_condition:
+            errors.append("Hair condition is required.")
+        if not donation_date_str:
+            donation_date_str = date.today().strftime('%Y-%m-%d')
+
+        if errors:
+            for err in errors:
+                flash(err, 'danger')
+            return render_template('ngo/complete_donation.html', appointment=appt, profile=profile_data)
+
+        # Create permanent donation record
+        Donation.create(
+            donor_id=appt['donor_id'],
+            ngo_id=profile_data['id'],
+            donation_center_id=appt['donation_center_id'],
+            hair_length=length_val,
+            hair_type=hair_type,
+            hair_condition=hair_condition,
+            donation_date=donation_date_str,
+            appointment_id=appt['id'],
+            quantity_or_estimated_weight=weight_or_qty if weight_or_qty else None,
+            notes=notes if notes else None,
+            status='Completed'
+        )
+
+        # Mark appointment status as 'Completed'
+        Appointment.update_status(
+            appointment_id=appointment_id,
+            new_status='Completed',
+            ngo_notes=(appt.get('ngo_notes') or '') + f"\nDonation completed on {donation_date_str}. Measured length: {length_val} cm."
+        )
+
+        flash(f"Hair donation successfully recorded for {appt['donor_name']}! Appointment is now marked as Completed.", 'success')
+        return redirect(url_for('ngo.donations'))
+
+    return render_template(
+        'ngo/complete_donation.html',
+        appointment=appt,
+        profile=profile_data,
+        today=date.today().strftime('%Y-%m-%d')
+    )
+
+
+# ==========================================================
+# MODULE 3: NGO DONATIONS REPOSITORY
+# ==========================================================
+
+@ngo_bp.route('/donations')
+@role_required('ngo')
+@ngo_approved_required
+def donations():
+    """View all fulfilled hair donations recorded by this NGO."""
+    user_id = session.get('user_id')
+    profile_data = NGO.get_by_user_id(user_id)
+
+    donation_list = Donation.get_by_ngo(profile_data['id'])
+    stats = Donation.count_by_ngo(profile_data['id'])
+
+    return render_template(
+        'ngo/donations.html',
+        donations=donation_list,
+        stats=stats,
+        profile=profile_data
+    )
+
 
