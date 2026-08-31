@@ -1,10 +1,47 @@
 /**
  * HairSync Frontend JavaScript
- * Handles dynamic role forms, client-side validation, image previews, and UI polish.
+ * Handles dynamic role forms, client-side validation, image previews, UI polish,
+ * navbar scroll effects, and scroll-reveal animations.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. Password Visibility Toggle
+
+    // 1. Navbar Scroll Effect
+    const navbar = document.getElementById('mainNavbar');
+    if (navbar) {
+        const handleScroll = () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll(); // Run on load
+    }
+
+    // 2. Scroll Reveal Animations
+    const revealElements = document.querySelectorAll('.reveal, .reveal-stagger');
+    if (revealElements.length > 0 && 'IntersectionObserver' in window) {
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -40px 0px'
+        });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+    } else {
+        // Fallback: show all elements if IntersectionObserver isn't supported
+        revealElements.forEach(el => el.classList.add('visible'));
+    }
+
+    // 3. Password Visibility Toggle
     const togglePasswordButtons = document.querySelectorAll('.toggle-password');
     togglePasswordButtons.forEach(button => {
         button.addEventListener('click', function () {
@@ -30,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // 2. Dynamic Registration Form Role Switcher
+    // 4. Dynamic Registration Form Role Switcher
     const roleSelector = document.getElementById('registerRoleSelect');
     if (roleSelector) {
         function updateRoleFields() {
@@ -86,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
         updateRoleFields(); // Run on initial page load
     }
 
-    // 3. Photo Upload Preview (Donor Profile)
+    // 5. Photo Upload Preview (Donor Profile)
     const photoInput = document.getElementById('photoInput');
     const photoPreview = document.getElementById('photoPreview');
     if (photoInput && photoPreview) {
@@ -108,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 4. Auto-dismiss alerts after 6 seconds
+    // 6. Auto-dismiss alerts after 6 seconds
     const alerts = document.querySelectorAll('.alert-auto-dismiss');
     alerts.forEach(alert => {
         setTimeout(() => {
@@ -117,13 +154,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 6000);
     });
 
-    // 5. Confirmation for Admin Actions
+    // 7. Confirmation for Admin Actions
     const confirmActions = document.querySelectorAll('[data-confirm]');
     confirmActions.forEach(element => {
         element.addEventListener('click', function (e) {
             const message = this.getAttribute('data-confirm') || 'Are you sure you want to proceed?';
             if (!confirm(message)) {
                 e.preventDefault();
+            }
+        });
+    });
+
+    // 8. Smooth scroll for anchor links
+    document.querySelectorAll('a[href*="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            const href = this.getAttribute('href');
+            // Only handle same-page anchors
+            if (href.startsWith('#') || (href.includes('#') && href.split('#')[0] === '' )) {
+                const targetId = href.split('#')[1];
+                const target = document.getElementById(targetId);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }
         });
     });

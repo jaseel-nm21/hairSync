@@ -150,11 +150,11 @@
                 </div>
             </div>
 
-            <!-- Module 3 Live Services & Actions -->
+            <!-- Donation Services & Actions -->
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0"><i class="bi bi-stars text-teal me-2" style="color: #0f766e;"></i> Donation Services</h5>
-                    <span class="badge bg-teal-subtle text-teal small" style="background-color: #ccfbf1; color: #0f766e;">Module 3 Active</span>
+                    <span class="badge small" style="background-color: var(--hs-primary-light); color: var(--hs-primary);">Active Services</span>
                 </div>
                 <div class="card-body p-4">
                     <div class="row g-3">
@@ -234,7 +234,7 @@
                                 {% elif appt.status == 'Pending' %}
                                     <span class="badge bg-warning-subtle text-warning">Pending</span>
                                 {% elif appt.status == 'Completed' %}
-                                    <span class="badge bg-teal-subtle text-teal" style="background-color: #ccfbf1; color: #0f766e;">Completed</span>
+                                    <span class="badge" style="background-color: var(--hs-primary-light); color: var(--hs-primary);">Completed</span>
                                 {% else %}
                                     <span class="badge bg-light text-secondary border">{{ appt.status }}</span>
                                 {% endif %}

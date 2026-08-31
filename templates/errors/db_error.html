@@ -1,45 +1,29 @@
 {% extends "base.html" %}
-
-{% block title %}Database Notice - HairSync{% endblock %}
-
+{% block title %}Database Error - HairSync{% endblock %}
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="p-5 bg-white rounded-4 shadow-sm border">
-                <div class="text-center mb-4">
-                    <div class="stat-icon bg-warning-subtle text-warning mx-auto mb-3" style="width: 64px; height: 64px; font-size: 2rem;">
-                        <i class="bi bi-database-exclamation"></i>
-                    </div>
-                    <h3 class="fw-bold">Database Service Notice</h3>
-                    <p class="text-muted small">The application encountered an issue while accessing the SQLite database.</p>
-                </div>
-
-                {% if error %}
-                    <div class="p-3 bg-light rounded-3 text-start small font-monospace text-danger mb-4 border">
-                        <strong>Error details:</strong> {{ error }}
-                    </div>
-                {% endif %}
-
-                <h6 class="fw-bold mb-3"><i class="bi bi-tools text-primary me-2"></i> How to resolve this:</h6>
-                <ol class="small text-muted mb-4 d-flex flex-column gap-2 ps-3">
-                    <li>
-                        <strong>Check Database File:</strong> Ensure <code>instance/hairsync.db</code> exists and has read/write permissions.
-                    </li>
-                    <li>
-                        <strong>Initialize Database:</strong> Open your terminal in the <code>HairSync</code> project directory and run:
-                        <div class="bg-dark text-light p-2 rounded mt-1 font-monospace">python database/init_db.py</div>
-                        <em>or run <code>flask init-db</code> to rebuild the schema and seed accounts.</em>
-                    </li>
-                </ol>
-
-                <div class="text-center">
-                    <a href="{{ url_for('index') }}" class="btn btn-hs-primary rounded-pill px-4">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Try Again
-                    </a>
-                </div>
-            </div>
+<section class="error-page">
+    <div class="container text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-database-exclamation" style="font-size: 5rem; color: var(--hs-secondary); opacity: 0.7;"></i>
+        </div>
+        <h2 class="fw-bold mb-3" style="font-family: 'Playfair Display', serif;">Database Connection Error</h2>
+        <p class="text-muted mb-4 mx-auto" style="max-width: 500px;">
+            We're having trouble connecting to the database. This is usually temporary. Please try again in a moment.
+        </p>
+        {% if error %}
+        <div class="alert alert-danger mx-auto small text-start" style="max-width: 500px;">
+            <i class="bi bi-exclamation-triangle me-1"></i> <strong>Technical Details:</strong>
+            <code class="d-block mt-1">{{ error }}</code>
+        </div>
+        {% endif %}
+        <div class="d-flex justify-content-center gap-3 mt-4">
+            <a href="{{ url_for('index') }}" class="btn btn-hs-primary">
+                <i class="bi bi-house me-1"></i> Go Home
+            </a>
+            <a href="javascript:location.reload()" class="btn btn-hs-outline">
+                <i class="bi bi-arrow-clockwise me-1"></i> Retry
+            </a>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}
